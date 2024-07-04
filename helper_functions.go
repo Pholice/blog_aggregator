@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 )
 
 func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
@@ -20,4 +21,13 @@ func respondWithError(w http.ResponseWriter, code int, msg string) {
 		Error string `json:"error"`
 	}
 	respondWithJSON(w, code, payload{Error: msg})
+}
+
+func getToken(r *http.Request) (string, error) {
+	header := r.Header.Get("Authorization")
+	tokenString := ""
+	if strings.HasPrefix(header, "ApiKey ") {
+		tokenString = header[7:]
+	}
+	return tokenString, nil
 }

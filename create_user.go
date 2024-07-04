@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"time"
 
@@ -17,13 +18,21 @@ func (cfg *apiConfig) createUser(w http.ResponseWriter, r *http.Request) {
 	var reqBody Request
 	err := json.NewDecoder(r.Body).Decode(&reqBody)
 	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "Could not decode")
+		respondWithError(w, http.StatusBadRequest, "Could not decode JSON request")
+		return
 	}
 
-	respondWithJSON(w, http.StatusOK, database.User{
+	newUser := database.CreateUserParams{
 		ID:        uuid.New(),
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 		Name:      reqBody.Name,
-	})
+	}
+	user, err := cfg.DB.CreateUser(r.Context(), newUser)
+	if err != nil {
+		log.Printf("DB error: %v", err)
+		respondWithError(w, http.StatusBadRequest, "Could not save to DB")
+		return
+	}
+	respondWithJSON(w, http.StatusOK, user)
 }

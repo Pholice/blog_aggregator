@@ -34,6 +34,7 @@ func main() {
 
 	serveMux.Handle("GET /v1/healthz", http.HandlerFunc(cfg.readiness))
 	serveMux.Handle("POST /v1/users", http.HandlerFunc(cfg.createUser))
+	serveMux.Handle("GET /v1/users", http.HandlerFunc(cfg.getUser))
 	serveMux.Handle("GET /v1/err", http.HandlerFunc(cfg.err))
 	server.ListenAndServe()
 }
