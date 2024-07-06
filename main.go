@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/Pholice/blog_aggregator/internal/database"
+	"github.com/go-chi/chi"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
@@ -26,15 +27,16 @@ func main() {
 	dbQueries := database.New(db)
 	cfg := apiConfig{DB: dbQueries}
 
-	serveMux := http.NewServeMux()
+	v1Router := chi.NewRouter()
 	server := http.Server{
 		Addr:    port,
-		Handler: serveMux,
+		Handler: v1Router,
 	}
 
-	serveMux.Handle("GET /v1/healthz", http.HandlerFunc(cfg.readiness))
-	serveMux.Handle("POST /v1/users", http.HandlerFunc(cfg.createUser))
-	serveMux.Handle("GET /v1/users", http.HandlerFunc(cfg.getUser))
-	serveMux.Handle("GET /v1/err", http.HandlerFunc(cfg.err))
+	v1Router.Get("/v1/healthz", http.HandlerFunc(cfg.readiness))
+	v1Router.Get("/v1/err", http.HandlerFunc(cfg.err))
+	v1Router.Get("/v1/users", cfg.middlewareAuth(cfg.getUser))
+	v1Router.Post("/v1/users", http.HandlerFunc(cfg.createUser))
+	v1Router.Post("/v1/feeds", cfg.middlewareAuth(cfg.createFeed))
 	server.ListenAndServe()
 }

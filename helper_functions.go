@@ -23,7 +23,7 @@ func respondWithError(w http.ResponseWriter, code int, msg string) {
 	respondWithJSON(w, code, payload{Error: msg})
 }
 
-func getToken(r *http.Request) (string, error) {
+func authToken(r *http.Request) (string, error) {
 	header := r.Header.Get("Authorization")
 	tokenString := ""
 	if strings.HasPrefix(header, "ApiKey ") {

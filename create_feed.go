@@ -10,9 +10,10 @@ import (
 	"github.com/google/uuid"
 )
 
-func (cfg *apiConfig) createUser(w http.ResponseWriter, r *http.Request) {
+func (cfg *apiConfig) createFeed(w http.ResponseWriter, r *http.Request, user database.User) {
 	type Request struct {
 		Name string `json:"name"`
+		URL  string `json:"url"`
 	}
 	var reqBody Request
 	err := json.NewDecoder(r.Body).Decode(&reqBody)
@@ -20,18 +21,19 @@ func (cfg *apiConfig) createUser(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, http.StatusBadRequest, "Could not decode JSON request")
 		return
 	}
-
-	newUser := database.CreateUserParams{
+	newFeed := database.CreateFeedParams{
 		ID:        uuid.New(),
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		CreatedAt: time.Now().UTC(),
+		UpdatedAt: time.Now().UTC(),
 		Name:      reqBody.Name,
+		Url:       reqBody.URL,
+		UserID:    user.ID,
 	}
-	user, err := cfg.DB.CreateUser(r.Context(), newUser)
+	feed, err := cfg.DB.CreateFeed(r.Context(), newFeed)
 	if err != nil {
 		log.Printf("DB error: %v", err)
 		respondWithError(w, http.StatusBadRequest, "Could not save to DB")
 		return
 	}
-	respondWithJSON(w, http.StatusOK, user)
+	respondWithJSON(w, http.StatusOK, feed)
 }
