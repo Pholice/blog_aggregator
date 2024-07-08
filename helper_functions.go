@@ -1,9 +1,13 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
+	"log"
 	"net/http"
 	"strings"
+	"sync"
+	"time"
 )
 
 func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
@@ -30,4 +34,24 @@ func authToken(r *http.Request) (string, error) {
 		tokenString = header[7:]
 	}
 	return tokenString, nil
+}
+
+func (cfg *apiConfig) scraper() {
+	ticker := time.NewTicker(time.Minute)
+	defer ticker.Stop()
+	for ; ; <-ticker.C {
+		feeds, err := cfg.DB.GetNextFeedToFetch(context.Background(), 10)
+		if err != nil {
+			log.Println("Error fetching feeds:", err)
+			continue
+		}
+
+		wg := &sync.WaitGroup{}
+		for _, feed := range feeds {
+			wg.Add(1)
+			go cfg.processFeed(feed, wg)
+		}
+
+		wg.Wait()
+	}
 }
